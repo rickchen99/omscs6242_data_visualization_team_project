@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" class="no-js">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="canonical" href="https://html5-templates.com/" />
+    <title>Patent Network Viewer</title>
+    <meta name="description" content="Patent network viewer">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/sticky-menu.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+</head>
+
+<body id="page-top" data-spy="scroll" data-target=".navbar-fixed-top">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header page-scroll">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle menu</span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand page-scroll" href="#page-top">Patent Network</a>
+            </div>
+
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+                <ul class="nav navbar-nav">
+                    <li class="hidden">
+                        <a class="page-scroll" href="#page-top"></a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#contact">Members</a>
+                    </li>
+                </ul>
+            </div> <!-- .navbar-collapse -->
+        </div> <!-- .container -->
+    </nav>
+    <!-- Patent Network Section   -->
+    <section id="welcome" class="welcome-section">
+        <div class="container">
+            <form class="needs-validation" novalidate>
+                <div class="row">
+                    <h4 align = "left">Guide : </h4>
+                    <p align = "left">1. Use dropbox and Search to generate a graph or use Random Inventor Search to generate a random graph ;
+                    <br>2. Add to Graph will attach previous graphs, use slide bar and Apply Filter to filter the current graph.
+                    <br>3. Double click on the exisiting edge to reveal information between the inventor and the organization, <b>click outside the table to close the information box</b>.
+                    <br>4. Drag the nodes appart from each other to have more space for displaying information table</p>
+                     
+                    <div class="col-md-5 mb-3">
+                        
+
+                       
+                        <div class="search">
+                            <i class="fa fa-search"></i>
+                            <select id="ddlSearch">
+                                <option>Choose a number</option>
+                            </select>
+
+                        </div>
+                        <br><br>
+                        <div class="search">
+                            <button id="btnSearch" class="btn btn-primary" onclick="SearchInventor()"
+                                type="button">Search</button>
+                        </div>
+                    </div>
+                    <div class="col-md-5 mb-3">
+                        <div class="search">
+                            <!-- <label class="form-label" for="customRange1">Edge range</label> -->
+                            <div class="range">
+                                <input type="range" class="form-range" id="range_weight" min="0" max="99.9" step="0.3"
+                                    value="0" oninput="range_weight_disp.value = range_weight.value"><br />
+                                Select the % of confidence value to filter the graph <output id="range_weight_disp"></output>
+                            </div>
+                            
+                                <div class="search">
+                                    <button id="btnApplyFilter" class="btn btn-primary" onclick="ApplyFilter()"
+                                        type="button">Apply Filter</button>
+                                </div>
+                            
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr class="mb-4">
+                <button class="btn btn-primary" id="btnSearchRandom" onclick="SearchRandom()"
+                    type="button">Random Inventors Search
+                </button>
+                <button class="btn btn-primary" id="addGraph" onclick="SearchRandom()"
+                type="button">Add to Graph</button>
+
+            </form>
+        </div>
+        <div id="d3_network"></div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <h1>Team Members</h1>
+                    <h3>Rick Chen | Tylor Mondloch | Erik Sorensen | Sandro Sanchez | Erik Webb | Sang Yoon | </h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <a id="back2Top" title="Back to top" href="#">&#10148;</a>
+
+    <!-- jQuery -->
+    <script src="js/jquery.js"></script>
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- D3 -->
+    <script type="text/javascript" src="js/d3.v5.min.js"></script>
+
+    <!-- Scrolling Nav JavaScript -->
+    <script src="js/jquery.easing.min.js"></script>
+    <script src="js/sticky-menu.js"></script>
+    <script src='js/sql-browser.min.js'></script>
+    <script src="patent.js"></script>
+
+</body>
+
+</html>

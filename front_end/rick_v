@@ -1,0 +1,329 @@
+let db;
+var svg;
+var current_graph;
+var last_clicked;
+function graph_generator(arr)
+{
+    var links = arr;
+
+    var nodes = {};
+
+    var width = 1200,
+        height = 700;
+    color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // compute the distinct nodes from the links.
+    links.forEach(function (link) {
+        link.source = nodes[link.source] || (nodes[link.source] = { name: link.source });
+        link.target = nodes[link.target] || (nodes[link.target] = { name: link.target });
+    });
+
+    var force = d3.forceSimulation()
+        .nodes(d3.values(nodes))
+        .force("link", d3.forceLink(links).distance(100))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY())
+        .force("charge", d3.forceManyBody().strength(-250))
+        .alphaTarget(1)
+        .on("tick", tick);
+
+    
+    svg = d3.select("#d3_network")
+        .append("svg")
+        .attr("id","the_SVG_ID")
+        .attr("width", width)
+        .attr("height", height);
+
+    // svg.selectAll("*").remove();
+
+    // add the links
+    var path = svg.append("g")
+        .selectAll("path")
+        .data(links)
+        .enter()
+        .append("path")
+        .attr("class", function (d) { return "link " + d.type; });
+
+    path.style("stroke", function (d) {
+        if (d.value == 1) { return ('green'); }
+        else { return 'grey'; }
+    })
+
+    path.attr('stroke-width', function (d) {
+        if (d.value === 1) {
+            return 2; //Thin
+        } else {
+            return 5; //Thick
+        }
+    })
+
+    path.attr('stroke-dasharray', function (d) {
+        if (d.value === 1) {
+            return '5';
+        } else {
+            return null;
+        }
+    })
+
+    // define the nodes
+    var node = svg.selectAll(".node")
+        .data(force.nodes())
+        .enter().append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
+
+    node.append("circle")
+        .attr("id", function (d) {
+            return (d.name.replace(/\s+/g, '').toLowerCase());
+        })
+        .attr("r", function (d) {
+            d.weight = links.filter(function (l) {
+                return l.source.index == d.index || l.target.index == d.index
+            }).length;
+            var minRadius = 10;
+            return minRadius + (d.weight * 0.5);
+        })
+        .style("fill", function (d) {
+            return color(d.weight);
+        });
+
+    var label = svg.selectAll(".mytext")
+        .data(force.nodes())
+        .enter().append("g")
+        .attr("class", "node");
+
+    label.append("text")
+        .text(function (d) { return d.name; })
+        .attr("id", function (d) {
+            return (d.name.replace(/\s+/g, '').toLowerCase());
+        });
+
+    node.on("dblclick", function (d) {
+        d.fixed = false;
+        d.fx = null;
+        d.fy = null;
+
+        d3.select(this) // `this` is the node where drag happend
+            .select("circle")
+            .style("fill", function (d) {
+                return color(d.weight);
+            });
+    });
+
+    // add the curvy lines
+    function tick() {
+        path.attr("d", function (d) {
+            var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = Math.sqrt(dx * dx + dy * dy);
+            return "M" +
+                d.source.x + "," +
+                d.source.y + "A" +
+                dr + "," + dr + " 0 0,1 " +
+                d.target.x + "," +
+                d.target.y;
+        });
+
+        node.attr("transform", function (d) {
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+
+        label.attr("transform", function (d) {
+            x = d.x + 20;
+            y = d.y;
+            return "translate(" + x + "," + y + ")";
+        });
+    };
+
+    function dragstarted(d) {
+        if (!d3.event.active) force.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+
+        d.fixed = true;
+
+        //node.style("fill", color(2));
+    };
+
+    function dragged(d) {
+        d.fx = d3.event.x;
+        d.fy = d3.event.y;
+    };
+
+    function dragended(d) {
+        if (!d3.event.active) force.alphaTarget(0);
+        if (d.fixed == true) {
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+        else {
+            d.fx = null;
+            d.fy = null;
+        }
+
+        d3.select(this) // `this` is the node where drag happend
+            .select("circle")
+            .style("fill", "blue");
+    };
+}
+
+document.getElementById("btnApplyFilter").onclick=async ()=>{
+    d3.select("#the_SVG_ID").remove();
+    //var source_name = document.getElementById("apply_filter").value;
+    var confidence_r = document.getElementById("range_weight").value;
+    temp_filter_graph = [];
+    var len = current_graph.length;
+    console.log(len)
+    
+    for (var i = 0; i < len; i++) {
+        
+        if(current_graph[i].value>confidence_r)
+        {
+            console.log("enter condition")
+            temp_filter_graph.push(current_graph[i])
+        }
+       
+    }
+    console.log(temp_filter_graph)
+    console.log(current_graph)
+    graph_generator(temp_filter_graph)
+
+}
+
+document.getElementById("btnSearch").onclick=async ()=>{
+    d3.select("#the_SVG_ID").remove();
+    var source_name = document.getElementById("ddlSearch").value;
+    var num_claims = document.getElementById("range_weight").value;
+
+    var query = `
+    select source_name as source, target_name as target, (confidence_r * 100) as value 
+    from sample_tb_10k 
+    where source_name = '${source_name}' and (confidence_r*100) > ${num_claims}
+    `
+    console.log(query);
+    let results = db.exec(query);
+
+    let result = results[0];
+    console.log(result)
+
+    var arr = [];
+    var len = result.values.length;
+    for (var i = 0; i < len; i++) {
+        arr[i] = {
+            source: result.values[i][0],
+            target: result.values[i][1],
+            value: result.values[i][2],
+        }
+    }
+    console.log(arr);
+    current_graph = arr;
+    graph_generator(current_graph)
+};
+
+document.getElementById("btnSearchRandom").onclick=async ()=>{
+    d3.select("#the_SVG_ID").remove();
+
+    var num_claims = document.getElementById("range_weight").value;
+    var query = `with random_name_list as
+    (SELECT DISTINCT(source_name) from sample_tb_10k ORDER by random() LIMIT 1)
+    select * FROM sample_tb_10k WHERE source_name is (
+    SELECT * FROM random_name_list
+    )
+    `
+    console.log(query);
+    let results = db.exec(query);
+
+    let result = results[0];
+    console.log(result)
+
+    var arr = [];
+    var len = result.values.length;
+    for (var i = 0; i < len; i++) {
+        arr[i] = {
+            source: result.values[i][3],
+            target: result.values[i][5],
+            value: result.values[i][8] * 100,
+        }
+    }
+    current_graph = arr;
+    console.log(current_graph);
+    graph_generator(current_graph)
+
+
+};
+
+
+
+
+
+(async () => {
+    var select = document.getElementById("ddlSearch");
+
+    let res = await fetch('sample_db_10k.db');
+    let arrayBuffer = await res.arrayBuffer();
+    let uInt8Array = new Uint8Array(arrayBuffer);
+    db=new SQL.Database(uInt8Array);
+
+    var query = `
+    select DISTINCT source_name as name 
+    from sample_tb_10k 
+    order by source_name
+    `
+
+    console.log(query);
+
+    let results = db.exec(query);
+    let result = results[0];
+    console.log(result)
+
+    var len = result.values.length;
+    for (var i = 0; i < len; i++) {
+        var el = document.createElement("option");
+        el.textContent = result.values[i][0];
+        el.value = result.values[i][0];
+        select.appendChild(el);
+    }
+})();
+
+
+
+temp_query = `with tb_1 as (SELECT * from sample_tb_10k
+    WHERE target_name = 'Sony Corporation'
+    order by random() limit 6
+    ),
+    tb_2 as (
+    SELECT * from sample_tb_10k
+    WHERE source_name  = 'Kenji Tanaka'
+    order by random() limit 3
+    ),
+    tb_3 as (
+    SELECT * from sample_tb_10k
+    WHERE source_name  = 'Yoshio Suzuki'
+    order by random() limit 3
+    )
+    
+    select * FROM tb_1 UNION
+    SELECT * FROM tb_2 UNION 
+    SELECT *FROM tb_3`
+    let results = db.exec(temp_query);
+
+    let result = results[0];
+    console.log(result)
+
+    var arr = [];
+    var len = result.values.length;
+    for (var i = 0; i < len; i++) {
+        arr[i] = {
+            source: result.values[i][3],
+            target: result.values[i][5],
+            value: result.values[i][8],
+        }
+    }
+    console.log(arr);
+    current_graph = arr;
+    current_graph_temp = arr;
+    graph_generator(current_graph_temp)
